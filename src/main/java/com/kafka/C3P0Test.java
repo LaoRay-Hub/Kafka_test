@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ public class C3P0Test {
     public static void main(String[] args) {
         // 1.批量插入操作
          getData();
+        insertData();
 //        insertData();
         // 2.批量更新操作
         // getDataByMySQL();
@@ -73,7 +75,7 @@ public class C3P0Test {
 //
 //    }
 
-    // 初始化userSet
+    // 初始化empGPSSet
     public static void getData() {
 
         Properties properties = new Properties();
@@ -86,18 +88,20 @@ public class C3P0Test {
         properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         properties.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 
+
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer(properties);
 
         kafkaConsumer.subscribe(Arrays.asList("sqlserver_xj.dbo.Emp_GpsDtata"));
 
-        for(int i=0;i<100;i++) {
-            ConsumerRecords<String, String> records = kafkaConsumer.poll(1000);
+        for(int i=0;i<10;i++){
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(10));
+            System.out.println(records);
             for (ConsumerRecord<String, String> record : records) {
                 //System.out.printf("offset = %d, value = %s", record.offset(), record.value());
                 //{"before":null,"after":{"HisUid":20191104092565508,"EmployeeID":"1432","EmployeeName":"张阳","GpsTime":1572859397000,"Longitude":30.36314,"Latitude":120.2156272,"Speed":11.1,"Angle":62.6,"VsTime":1572859514000},"source":{"version":"1.1.2.Final","connector":"sqlserver","name":"sqlserver_xj","ts_ms":1606143115835,"snapshot":"true","db":"IPMS4S_HRXJ_JK","schema":"dbo","table":"Emp_GpsDtata","change_lsn":null,"commit_lsn":"000052f2:00000538:001f","event_serial_no":null},"op":"r","ts_ms":1606143115835,"transaction":null}
-                String[] split = record.value().split(":\\{");
+                //String[] split = record.value().split(":\\{");
                 //"HisUid":20191104092565508,"EmployeeID":"1432","EmployeeName":"张阳","GpsTime":1572859397000,"Longitude":30.36314,"Latitude":120.2156272,"Speed":11.1,"Angle":62.6,"VsTime":1572859514000},"source":{"version":"1.1.2.Final","connector":"sqlserver","name":"sqlserver_xj","ts_ms":1606143115835,"snapshot":"true","db":"IPMS4S_HRXJ_JK","schema":"dbo","table":"Emp_GpsDtata","change_lsn":null,"commit_lsn":"000052f2:00000538:001f","event_serial_no":null},"op":"r","ts_ms":1606143115835,"transaction":null}
-                String[] split1 = split[1].split(",");
+               // String[] split1 = split[1].split(",");
 
                 //将json字符串转换成jsonObject对象
                 String myJsonObj = record.value();
@@ -130,7 +134,6 @@ public class C3P0Test {
             }
         }
         System.out.println(empGPSSet);
-        insertData();
     }
         // 批量插入数据
         public static void insertData(){
@@ -140,7 +143,6 @@ public class C3P0Test {
                 conn.setAutoCommit(false);
                 String sql = "insert into security_emp_gpsdtata_mi_v2 (hisuid,employeeid,employeename,gpstime,longitude,latitude,speed,angle,vstime,update_time) values(?,?,?,?,?,?,?,?,?,?)";
                 ps=conn.prepareStatement(sql);
-                System.out.println(sql);
                 for (EmpGPS empGPS : empGPSSet) {
                     ps.setString(1, empGPS.getHisuid());
                     ps.setString(2, empGPS.getEmployeeid());

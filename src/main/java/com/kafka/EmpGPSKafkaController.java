@@ -6,10 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -41,7 +38,7 @@ public class EmpGPSKafkaController {
         kafkaConsumer.subscribe(Arrays.asList("sqlserver_xj.dbo.Emp_GpsDtata"));
 
         while (true) {
-            ConsumerRecords<String, String> records = kafkaConsumer.poll(1000);
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(100);
             for (ConsumerRecord<String, String> record : records) {
                 //System.out.printf("offset = %d, value = %s", record.offset(), record.value());
                 //{"before":null,"after":{"HisUid":20191104092565508,"EmployeeID":"1432","EmployeeName":"张阳","GpsTime":1572859397000,"Longitude":30.36314,"Latitude":120.2156272,"Speed":11.1,"Angle":62.6,"VsTime":1572859514000},"source":{"version":"1.1.2.Final","connector":"sqlserver","name":"sqlserver_xj","ts_ms":1606143115835,"snapshot":"true","db":"IPMS4S_HRXJ_JK","schema":"dbo","table":"Emp_GpsDtata","change_lsn":null,"commit_lsn":"000052f2:00000538:001f","event_serial_no":null},"op":"r","ts_ms":1606143115835,"transaction":null}
@@ -107,14 +104,19 @@ public class EmpGPSKafkaController {
                     pre.setDouble(8, angle);
                     pre.setString(9, vsTime);
                     pre.setString(10, update_time);
-
-
                     pre.execute();
 
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("连接数据库失败！");
+                }finally {
+                    try {
+                        dbConn.close();
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
                 }
+
             }
 
         }

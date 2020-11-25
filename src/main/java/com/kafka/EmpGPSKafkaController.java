@@ -52,25 +52,23 @@ public class EmpGPSKafkaController {
                 //将json字符串转换成jsonObject对象
                 String myJsonObj = record.value();
                 JSONObject jsonobj = JSON.parseObject(myJsonObj);
-
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 //json字段解析
                 String hisUid = jsonobj.getJSONObject("after").getString("HisUid");
                 String employeeID = jsonobj.getJSONObject("after").getString("EmployeeID");
                 String employeeName = jsonobj.getJSONObject("after").getString("EmployeeName");
                 Long gpsTime_timestamp = jsonobj.getJSONObject("after").getLong("GpsTime");
                 Timestamp ts = new Timestamp(gpsTime_timestamp);
-                Date gpsTime = new Date();
-                gpsTime = ts;
+                String gpsTime = dateFormat.format(ts);
+
                 Double longitude = jsonobj.getJSONObject("after").getDouble("Longitude");
                 Double latitude = jsonobj.getJSONObject("after").getDouble("Latitude");
                 Double speed = jsonobj.getJSONObject("after").getDouble("Speed");
                 Double angle = jsonobj.getJSONObject("after").getDouble("Angle");
                 Long vsTime_timestamp = jsonobj.getJSONObject("after").getLong("VsTime");
                 Timestamp ts1 = new Timestamp(vsTime_timestamp);
-                Date vsTime = new Date();
-                vsTime = ts1;
+                String vsTime = dateFormat.format(ts1);
                 Date now = new Date();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");//可以方便地修改日期格式
                 String update_time = dateFormat.format(now);
 
                 System.out.println(hisUid);
@@ -102,12 +100,12 @@ public class EmpGPSKafkaController {
                     pre.setString(1, hisUid);
                     pre.setString(2, employeeID);
                     pre.setString(3, employeeName);
-                    pre.setDate(4, (java.sql.Date) gpsTime);
+                    pre.setString(4,  gpsTime);
                     pre.setDouble(5, longitude);
                     pre.setDouble(6, latitude);
                     pre.setDouble(7, speed);
                     pre.setDouble(8, angle);
-                    pre.setDate(9, (java.sql.Date) vsTime);
+                    pre.setString(9, vsTime);
                     pre.setString(10, update_time);
 
 

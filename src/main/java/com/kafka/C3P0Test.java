@@ -20,6 +20,7 @@ public class C3P0Test {
     private static PreparedStatement ps = null;
     private static ResultSet rs = null;
     public static HashSet<EmpGPS> empGPSSet = new HashSet<>();
+    public static HashSet<EmpGPS> empGPSSet_bak = new HashSet<>();
 
     public static void main(String[] args) {
         // 1.批量插入操作
@@ -80,9 +81,9 @@ public class C3P0Test {
 
         Properties properties = new Properties();
         properties.put("bootstrap.servers", "prod-node4:9092");
-        properties.put("group.id", "group-1");
+        properties.put("group.id", "group4");
         properties.put("enable.auto.commit", "true");
-        properties.put("auto.commit.interval.ms", "1000");
+        properties.put("auto.commit.interval.ms", "10000");
         properties.put("auto.offset.reset", "earliest");
         properties.put("session.timeout.ms", "30000");
         properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -93,20 +94,15 @@ public class C3P0Test {
 
         kafkaConsumer.subscribe(Arrays.asList("sqlserver_xj.dbo.Emp_GpsDtata"));
 
-        for(int i=0;i<10;i++){
-            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(10));
-            System.out.println(records);
+
+            ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(10000));
+
             for (ConsumerRecord<String, String> record : records) {
-                //System.out.printf("offset = %d, value = %s", record.offset(), record.value());
-                //{"before":null,"after":{"HisUid":20191104092565508,"EmployeeID":"1432","EmployeeName":"张阳","GpsTime":1572859397000,"Longitude":30.36314,"Latitude":120.2156272,"Speed":11.1,"Angle":62.6,"VsTime":1572859514000},"source":{"version":"1.1.2.Final","connector":"sqlserver","name":"sqlserver_xj","ts_ms":1606143115835,"snapshot":"true","db":"IPMS4S_HRXJ_JK","schema":"dbo","table":"Emp_GpsDtata","change_lsn":null,"commit_lsn":"000052f2:00000538:001f","event_serial_no":null},"op":"r","ts_ms":1606143115835,"transaction":null}
-                //String[] split = record.value().split(":\\{");
-                //"HisUid":20191104092565508,"EmployeeID":"1432","EmployeeName":"张阳","GpsTime":1572859397000,"Longitude":30.36314,"Latitude":120.2156272,"Speed":11.1,"Angle":62.6,"VsTime":1572859514000},"source":{"version":"1.1.2.Final","connector":"sqlserver","name":"sqlserver_xj","ts_ms":1606143115835,"snapshot":"true","db":"IPMS4S_HRXJ_JK","schema":"dbo","table":"Emp_GpsDtata","change_lsn":null,"commit_lsn":"000052f2:00000538:001f","event_serial_no":null},"op":"r","ts_ms":1606143115835,"transaction":null}
-               // String[] split1 = split[1].split(",");
 
                 //将json字符串转换成jsonObject对象
                 String myJsonObj = record.value();
                 JSONObject jsonobj = JSON.parseObject(myJsonObj);
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
                 //json字段解析
                 String hisUid = jsonobj.getJSONObject("after").getString("HisUid");
                 String employeeID = jsonobj.getJSONObject("after").getString("EmployeeID");
@@ -127,13 +123,28 @@ public class C3P0Test {
 
                 java.util.Date now = new Date();
                 String update_time = dateFormat.format(now);
-
+                //将解析后的数据存入empGPSSet
+                //以husid为判断依据，以分钟为最小单位去重
                 EmpGPS u1 = new EmpGPS(hisUid, employeeID, employeeName, gpsTime, longitude, latitude, speed, angle, vsTime, update_time);
-                empGPSSet.add(u1);
-                System.out.println("22");
+                empGPSSet_bak.add(u1);
+                if (empGPSSet.isEmpty()) {
+                    empGPSSet.add(u1);
+                } else {
+                    for (EmpGPS s : empGPSSet_bak) {
+                        if (s.getEmployeeid().equals(u1.getEmployeeid()) && s.getGpstime().equals(u1.getGpstime())) {
+                            System.out.println("相同");
+                            break;
+                        } else {
+                            System.out.println("不同");
+                            empGPSSet.add(u1);
+                            
+                        }
+                    }
+
+                    System.out.println("22");
+                }
+
             }
-        }
-        System.out.println(empGPSSet);
     }
         // 批量插入数据
         public static void insertData(){

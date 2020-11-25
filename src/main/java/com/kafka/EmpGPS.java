@@ -1,5 +1,7 @@
 package com.kafka;
 
+import java.util.Objects;
+
 public class EmpGPS {
 
 
@@ -126,5 +128,27 @@ public class EmpGPS {
 
     public EmpGPS() {
         super();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EmpGPS empGPS = (EmpGPS) o;
+        return Double.compare(empGPS.longitude, longitude) == 0 &&
+                Double.compare(empGPS.latitude, latitude) == 0 &&
+                Double.compare(empGPS.speed, speed) == 0 &&
+                Double.compare(empGPS.angle, angle) == 0 &&
+                hisuid.equals(empGPS.hisuid) &&
+                employeeid.equals(empGPS.employeeid) &&
+                employeename.equals(empGPS.employeename) &&
+                gpstime.equals(empGPS.gpstime) &&
+                vstime.equals(empGPS.vstime) &&
+                update_time.equals(empGPS.update_time);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hisuid, employeeid, employeename, gpstime, longitude, latitude, speed, angle, vstime, update_time);
     }
 }
